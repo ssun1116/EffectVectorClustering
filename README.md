@@ -43,7 +43,7 @@ internally.
 ### 2. `run_from_embeddings.py`
 
 - **Input:** `embeddings.h5ad`
-- **Function:** runs steps 3–5 in order
+- **Function:** runs steps 3–6 in order
 - **Output:** `analysis_outputs/html/final_low_resolution_module_browser.html`
 
 ### 3. `cluster_perts_latent_vectors.py`
@@ -62,7 +62,7 @@ internally.
 
 - **Input:** `pipeline_work/clustered_pert_effect_vectors.html`
 - **Function:** coordinates low-resolution module segmentation and final-browser
-  generation
+  generation, including GO enrichment
 - **Outputs:**
   - `analysis_outputs/tables/final_low_resolution_module_summary.tsv`
   - `analysis_outputs/html/final_low_resolution_module_browser.html`
@@ -77,6 +77,17 @@ internally.
   - `analysis_outputs/tables/low_resolution_module_summary.tsv`
   - `analysis_outputs/tables/low_resolution_module_members.tsv`
   - `analysis_outputs/html/low_resolution_module_browser.html`
+
+### 6. `run_go_enrichment.py`
+
+- **Input:** low-resolution module summary and membership tables
+- **Function:** queries mouse g:Profiler for `GO:BP`, `GO:MF`, and `GO:CC`,
+  using all heatmap perturbation genes as the custom background; adds each
+  module's top GO term to the browser
+- **Outputs:**
+  - `analysis_outputs/tables/low_resolution_module_go_summary.tsv`
+  - `analysis_outputs/tables/low_resolution_module_go_enrichment.tsv`
+  - `analysis_outputs/html/low_resolution_go_module_browser.html`
 
 ## Helper files
 
@@ -115,8 +126,9 @@ input.h5ad (raw counts)
 → cosine similarity and hierarchical clustering
 → clustered_pert_effect_vectors.html
 → low-resolution module segmentation
+→ g:Profiler GO enrichment
 → final_low_resolution_module_browser.html
 ```
 
 Energy-distance testing uses 1,000 permutations and may take time on a large
-dataset.
+dataset. GO enrichment requires internet access to the g:Profiler API.

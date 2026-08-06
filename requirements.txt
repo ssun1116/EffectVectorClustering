@@ -3,6 +3,7 @@ numpy
 numba
 pandas
 plotly
+requests
 scanpy[leiden]
 scikit-learn
 scipy

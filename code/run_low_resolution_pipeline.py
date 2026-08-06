@@ -13,13 +13,12 @@ CODE = ROOT / "code"
 OUTPUTS = ROOT / "analysis_outputs"
 LOCAL_STEPS = [
     CODE / "generate_low_resolution_browser.py",
+    CODE / "run_go_enrichment.py",
 ]
 INTERMEDIATES = [
     OUTPUTS / "tables" / "low_resolution_module_summary.tsv",
     OUTPUTS / "tables" / "low_resolution_module_members.tsv",
-    OUTPUTS / "tables" / "low_resolution_module_go_enrichment.tsv",
     OUTPUTS / "html" / "low_resolution_module_browser.html",
-    OUTPUTS / "html" / "low_resolution_go_module_browser.html",
 ]
 
 
@@ -49,11 +48,11 @@ def main():
         subprocess.run(
             [sys.executable, str(script)], cwd=ROOT, check=True, env=child_env
         )
-    source_browser = OUTPUTS / "html" / "low_resolution_module_browser.html"
+    source_browser = OUTPUTS / "html" / "low_resolution_go_module_browser.html"
     final_browser = OUTPUTS / "html" / "final_low_resolution_module_browser.html"
     shutil.copyfile(source_browser, final_browser)
     shutil.copyfile(
-        OUTPUTS / "tables" / "low_resolution_module_summary.tsv",
+        OUTPUTS / "tables" / "low_resolution_module_go_summary.tsv",
         OUTPUTS / "tables" / "final_low_resolution_module_summary.tsv",
     )
     print("\n==> final low-resolution browser", flush=True)
