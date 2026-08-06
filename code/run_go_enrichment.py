@@ -4,6 +4,7 @@ import csv
 import json
 import pathlib
 import re
+import shutil
 import time
 
 import requests
@@ -20,6 +21,8 @@ MODULE_BROWSER = HTML / "low_resolution_module_browser.html"
 GO_SUMMARY = TABLES / "low_resolution_module_go_summary.tsv"
 GO_ENRICHMENT = TABLES / "low_resolution_module_go_enrichment.tsv"
 GO_BROWSER = HTML / "low_resolution_go_module_browser.html"
+FINAL_BROWSER = HTML / "final_low_resolution_module_browser.html"
+FINAL_SUMMARY = TABLES / "final_low_resolution_module_summary.tsv"
 
 GPROFILER_URL = "https://biit.cs.ut.ee/gprofiler/api/gost/profile/"
 GO_SOURCES = ["GO:BP", "GO:MF", "GO:CC"]
@@ -153,10 +156,13 @@ def main():
     write_tsv(GO_SUMMARY, go_summaries, go_columns)
     write_tsv(GO_ENRICHMENT, enrichment_rows, enrichment_columns)
     add_go_to_browser(labels)
+    shutil.copyfile(GO_BROWSER, FINAL_BROWSER)
+    shutil.copyfile(GO_SUMMARY, FINAL_SUMMARY)
     print(f"GO enrichment completed for {len(summaries)} modules")
     print(GO_SUMMARY)
     print(GO_ENRICHMENT)
     print(GO_BROWSER)
+    print(FINAL_BROWSER)
 
 
 if __name__ == "__main__":

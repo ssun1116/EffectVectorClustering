@@ -13,7 +13,10 @@ columns:
 - `predicted_group`: cell-type/group annotation
 - `num_guides`: optional; if present, only `num_guides == 1` cells are used
 
-## Run the complete pipeline
+## Run the pipeline step by step
+
+Run every numbered script separately. This keeps every intermediate output
+available for inspection before continuing to the next step.
 
 ```bash
 cd /data/EffectVectorClustering
@@ -21,14 +24,19 @@ python -m pip install -r requirements.txt
 
 python code/generate_embeddings.py \
   --input /path/to/input.h5ad \
-  --output /path/to/embeddings.h5ad
+  --output pipeline_work/embeddings.h5ad
 
-python code/run_from_embeddings.py \
-  --embeddings /path/to/embeddings.h5ad
+python code/cluster_perts_latent_vectors.py \
+  --embeddings pipeline_work/embeddings.h5ad \
+  --work-dir pipeline_work
+
+python code/generate_low_resolution_browser.py
+
+python code/run_go_enrichment.py
 ```
 
-Most users only need to run these two files. The remaining files are called
-internally.
+After each command, inspect the outputs listed below. The next command reads
+the preceding command's output.
 
 ## Code order
 
@@ -40,13 +48,7 @@ internally.
 - **Output:** `embeddings.h5ad` containing 100-dimensional per-cell latent
   vectors; trained models under `embedding_models/`
 
-### 2. `run_from_embeddings.py`
-
-- **Input:** `embeddings.h5ad`
-- **Function:** runs steps 3–6 in order
-- **Output:** `analysis_outputs/html/final_low_resolution_module_browser.html`
-
-### 3. `cluster_perts_latent_vectors.py`
+### 2. `cluster_perts_latent_vectors.py`
 
 - **Input:** `embeddings.h5ad`
 - **Function:** performs energy-distance permutation tests, averages embeddings
@@ -58,16 +60,7 @@ internally.
   - `pipeline_work/pb_effect_vectors.h5ad`
   - `pipeline_work/clustered_pert_effect_vectors.html`
 
-### 4. `run_low_resolution_pipeline.py`
-
-- **Input:** `pipeline_work/clustered_pert_effect_vectors.html`
-- **Function:** coordinates low-resolution module segmentation and final-browser
-  generation, including GO enrichment
-- **Outputs:**
-  - `analysis_outputs/tables/final_low_resolution_module_summary.tsv`
-  - `analysis_outputs/html/final_low_resolution_module_browser.html`
-
-### 5. `generate_low_resolution_browser.py`
+### 3. `generate_low_resolution_browser.py`
 
 - **Input:** clustered cosine-similarity matrix embedded in
   `clustered_pert_effect_vectors.html`
@@ -78,7 +71,7 @@ internally.
   - `analysis_outputs/tables/low_resolution_module_members.tsv`
   - `analysis_outputs/html/low_resolution_module_browser.html`
 
-### 6. `run_go_enrichment.py`
+### 4. `run_go_enrichment.py`
 
 - **Input:** low-resolution module summary and membership tables
 - **Function:** queries mouse g:Profiler for `GO:BP`, `GO:MF`, and `GO:CC`,
@@ -88,6 +81,8 @@ internally.
   - `analysis_outputs/tables/low_resolution_module_go_summary.tsv`
   - `analysis_outputs/tables/low_resolution_module_go_enrichment.tsv`
   - `analysis_outputs/html/low_resolution_go_module_browser.html`
+  - `analysis_outputs/tables/final_low_resolution_module_summary.tsv`
+  - `analysis_outputs/html/final_low_resolution_module_browser.html`
 
 ## Helper files
 
