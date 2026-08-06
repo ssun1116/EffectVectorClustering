@@ -13,12 +13,7 @@ from scipy.spatial.distance import pdist
 from sklearn.metrics.pairwise import cosine_similarity
 from statsmodels.stats.multitest import multipletests
 
-from aggregation import aggregate_anndata
-
-
-ROOT = pathlib.Path(__file__).resolve().parents[1]
-DEFAULT_INPUT = pathlib.Path("/data/Input/embeddings.h5ad")
-DEFAULT_WORK = ROOT / "pipeline_work"
+from helpers.aggregation import aggregate_anndata
 
 
 @njit(parallel=True)
@@ -132,13 +127,20 @@ def write_clustered_html(effect, output_html, significance):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--embeddings", type=pathlib.Path, default=DEFAULT_INPUT)
-    parser.add_argument("--work-dir", type=pathlib.Path, default=DEFAULT_WORK)
+    parser.add_argument("--embeddings", type=pathlib.Path, required=True)
+    parser.add_argument("--edist-output", type=pathlib.Path, required=True)
+    parser.add_argument("--effect-vectors-output", type=pathlib.Path, required=True)
+    parser.add_argument("--clustered-html-output", type=pathlib.Path, required=True)
     parser.add_argument("--min-cells", type=int, default=20)
     parser.add_argument("--permutations", type=int, default=1000)
     parser.add_argument("--fdr", type=float, default=0.05)
     args = parser.parse_args()
-    args.work_dir.mkdir(parents=True, exist_ok=True)
+    for output in (
+        args.edist_output,
+        args.effect_vectors_output,
+        args.clustered_html_output,
+    ):
+        output.parent.mkdir(parents=True, exist_ok=True)
 
     embeddings = anndata.read_h5ad(args.embeddings)
     required = {"predicted_group", "gene_target"}
@@ -146,10 +148,13 @@ def main():
     if missing:
         raise ValueError(f"embeddings.h5ad is missing .obs columns: {sorted(missing)}")
     edist = compute_edists(embeddings, args.min_cells, args.permutations)
-    edist.to_csv(args.work_dir / "edist_results.csv.gz", index=False)
+    edist.to_csv(args.edist_output, index=False)
     effect = build_effect_vectors(embeddings, edist, args.min_cells)
-    effect.write_h5ad(args.work_dir / "pb_effect_vectors.h5ad")
-    write_clustered_html(effect, args.work_dir / "clustered_pert_effect_vectors.html", args.fdr)
+    effect.write_h5ad(args.effect_vectors_output)
+    write_clustered_html(effect, args.clustered_html_output, args.fdr)
+    print(args.edist_output.resolve())
+    print(args.effect_vectors_output.resolve())
+    print(args.clustered_html_output.resolve())
 
 
 if __name__ == "__main__":

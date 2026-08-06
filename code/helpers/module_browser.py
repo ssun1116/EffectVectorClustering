@@ -2,22 +2,9 @@ import base64
 import csv
 import html
 import json
-import os
-import pathlib
 import textwrap
 
 import numpy as np
-
-
-HERE = pathlib.Path(__file__).resolve().parents[1]
-HTML_PATH = pathlib.Path(
-    os.environ.get("EFFECT_VECTOR_HTML", HERE / "pipeline_work" / "clustered_pert_effect_vectors.html")
-)
-OUT_DIR = HERE / "analysis_outputs"
-ANNOTATED_SUMMARY = OUT_DIR / "tables" / "low_resolution_module_summary.tsv"
-UNBIASED_SUMMARY = OUT_DIR / "tables" / "low_resolution_module_summary.tsv"
-UNBIASED_MEMBERS = OUT_DIR / "tables" / "low_resolution_module_members.tsv"
-BROWSER_HTML = OUT_DIR / "html" / "low_resolution_module_browser.html"
 
 
 def load_plotly_heatmap_payload(path):
@@ -55,10 +42,10 @@ def as_float(row, key):
     return None if val == "" else float(val)
 
 
-def build_modules():
-    annotated = {row["module_id"]: row for row in read_tsv(ANNOTATED_SUMMARY)}
-    unbiased = read_tsv(UNBIASED_SUMMARY)
-    members = read_tsv(UNBIASED_MEMBERS)
+def build_modules(summary_path, members_path):
+    annotated = {row["module_id"]: row for row in read_tsv(summary_path)}
+    unbiased = read_tsv(summary_path)
+    members = read_tsv(members_path)
     by_module = {}
     for row in members:
         by_module.setdefault(row["module_id"], []).append(row)
@@ -99,9 +86,9 @@ def build_modules():
     return modules
 
 
-def write_browser():
-    payload = load_plotly_heatmap_payload(HTML_PATH)
-    modules = build_modules()
+def write_browser(clustered_html, summary_path, members_path, output_html):
+    payload = load_plotly_heatmap_payload(clustered_html)
+    modules = build_modules(summary_path, members_path)
     data = {
         "labels": payload["x"],
         "yLabels": payload["y"],
@@ -784,9 +771,5 @@ renderAll();
 </body>
 </html>
 """
-    BROWSER_HTML.write_text(html_text)
-    print(BROWSER_HTML)
-
-
-if __name__ == "__main__":
-    write_browser()
+    output_html.write_text(html_text)
+    print(output_html)

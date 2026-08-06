@@ -2,21 +2,8 @@ import base64
 import collections
 import json
 import math
-import os
-import pathlib
 
 import numpy as np
-
-
-HERE = pathlib.Path(__file__).resolve().parents[1]
-HTML_PATH = pathlib.Path(
-    os.environ.get("EFFECT_VECTOR_HTML", HERE / "pipeline_work" / "clustered_pert_effect_vectors.html")
-)
-OUT_DIR = HERE / "analysis_outputs"
-NOTEBOOK_PATH = OUT_DIR / "cluster_effect_vector_heatmap_modules_unbiased.ipynb"
-SUMMARY_TSV = OUT_DIR / "effect_vector_heatmap_module_summary_unbiased.tsv"
-MEMBERS_TSV = OUT_DIR / "effect_vector_heatmap_module_members_unbiased.tsv"
-MANUAL_LABELS_TSV = OUT_DIR / "effect_vector_heatmap_module_manual_labels.tsv"
 
 
 def load_plotly_heatmap(path):

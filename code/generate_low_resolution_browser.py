@@ -1,16 +1,10 @@
+import argparse
 import csv
 import math
 import pathlib
 
-import clustering_helpers as unbiased
-import module_browser
-
-
-HERE = pathlib.Path(__file__).resolve().parents[1]
-OUT_DIR = HERE / "analysis_outputs"
-LOWRES_HTML = OUT_DIR / "html" / "low_resolution_module_browser.html"
-LOWRES_SUMMARY = OUT_DIR / "tables" / "low_resolution_module_summary.tsv"
-LOWRES_MEMBERS = OUT_DIR / "tables" / "low_resolution_module_members.tsv"
+from helpers import clustering_helpers as unbiased
+from helpers import module_browser
 
 
 def write_tsv(path, rows, columns):
@@ -29,9 +23,15 @@ def write_tsv(path, rows, columns):
 
 
 def main():
-    (OUT_DIR / "tables").mkdir(parents=True, exist_ok=True)
-    (OUT_DIR / "html").mkdir(parents=True, exist_ok=True)
-    labels, matrix = unbiased.load_plotly_heatmap(unbiased.HTML_PATH)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--clustered-html", type=pathlib.Path, required=True)
+    parser.add_argument("--summary-output", type=pathlib.Path, required=True)
+    parser.add_argument("--members-output", type=pathlib.Path, required=True)
+    parser.add_argument("--browser-output", type=pathlib.Path, required=True)
+    args = parser.parse_args()
+    for output in (args.summary_output, args.members_output, args.browser_output):
+        output.parent.mkdir(parents=True, exist_ok=True)
+    labels, matrix = unbiased.load_plotly_heatmap(args.clustered_html)
     segments, prefix = unbiased.recursive_segments(
         matrix,
         min_size=6,
@@ -62,13 +62,19 @@ def main():
         "top_cells",
     ]
     member_cols = ["module_id", "position", "label", "cell_type", "gene"]
-    write_tsv(LOWRES_SUMMARY, summaries, summary_cols)
-    write_tsv(LOWRES_MEMBERS, member_rows, member_cols)
-    module_browser.write_browser()
+    write_tsv(args.summary_output, summaries, summary_cols)
+    write_tsv(args.members_output, member_rows, member_cols)
+    module_browser.write_browser(
+        args.clustered_html,
+        args.summary_output,
+        args.members_output,
+        args.browser_output,
+    )
 
     print(f"Generated {len(summaries)} unsupervised low-resolution modules")
-    print(LOWRES_SUMMARY)
-    print(LOWRES_HTML)
+    print(args.summary_output.resolve())
+    print(args.members_output.resolve())
+    print(args.browser_output.resolve())
     for row in summaries:
         print(
             f"module {row['module_id']:>2} {row['start']:>4}:{row['end']:<4} "

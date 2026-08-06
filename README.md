@@ -28,11 +28,23 @@ python code/generate_embeddings.py \
 
 python code/cluster_perts_latent_vectors.py \
   --embeddings pipeline_work/embeddings.h5ad \
-  --work-dir pipeline_work
+  --edist-output pipeline_work/edist_results.csv.gz \
+  --effect-vectors-output pipeline_work/pb_effect_vectors.h5ad \
+  --clustered-html-output pipeline_work/clustered_pert_effect_vectors.html
 
-python code/generate_low_resolution_browser.py
+python code/generate_low_resolution_browser.py \
+  --clustered-html pipeline_work/clustered_pert_effect_vectors.html \
+  --summary-output analysis_outputs/tables/low_resolution_module_summary.tsv \
+  --members-output analysis_outputs/tables/low_resolution_module_members.tsv \
+  --browser-output analysis_outputs/html/low_resolution_module_browser.html
 
-python code/run_go_enrichment.py
+python code/run_go_enrichment.py \
+  --module-summary analysis_outputs/tables/low_resolution_module_summary.tsv \
+  --module-members analysis_outputs/tables/low_resolution_module_members.tsv \
+  --module-browser analysis_outputs/html/low_resolution_module_browser.html \
+  --summary-output analysis_outputs/tables/final_low_resolution_module_summary.tsv \
+  --enrichment-output analysis_outputs/tables/final_low_resolution_go_enrichment.tsv \
+  --browser-output analysis_outputs/html/final_low_resolution_module_browser.html
 ```
 
 After each command, inspect the outputs listed below. The next command reads
@@ -84,20 +96,23 @@ the preceding command's output.
 
 ## Helper files
 
-### `aggregation.py`
+The following internal modules reside under `code/helpers/` and are not run
+directly.
+
+### `helpers/aggregation.py`
 
 - **Input:** per-cell AnnData and grouping columns
 - **Function:** calculates pseudobulk sums and cell counts
-- **Output:** aggregated AnnData used by step 3
+- **Output:** aggregated AnnData used by step 2
 
-### `clustering_helpers.py`
+### `helpers/clustering_helpers.py`
 
 - **Input:** clustered Plotly heatmap
 - **Function:** reads its similarity matrix, segments it into modules, and
   calculates module statistics
-- **Output:** module summaries and membership records used by step 5
+- **Output:** module summaries and membership records used by step 3
 
-### `module_browser.py`
+### `helpers/module_browser.py`
 
 - **Input:** similarity matrix, module summaries, and module memberships
 - **Function:** builds the self-contained interactive HTML interface

@@ -1,5 +1,6 @@
 """Run low-resolution module GO enrichment and annotate the module browser."""
 
+import argparse
 import csv
 import json
 import pathlib
@@ -8,18 +9,6 @@ import time
 
 import requests
 
-
-ROOT = pathlib.Path(__file__).resolve().parents[1]
-OUTPUTS = ROOT / "analysis_outputs"
-TABLES = OUTPUTS / "tables"
-HTML = OUTPUTS / "html"
-
-MODULE_SUMMARY = TABLES / "low_resolution_module_summary.tsv"
-MODULE_MEMBERS = TABLES / "low_resolution_module_members.tsv"
-MODULE_BROWSER = HTML / "low_resolution_module_browser.html"
-FINAL_BROWSER = HTML / "final_low_resolution_module_browser.html"
-FINAL_SUMMARY = TABLES / "final_low_resolution_module_summary.tsv"
-FINAL_ENRICHMENT = TABLES / "final_low_resolution_go_enrichment.tsv"
 
 GPROFILER_URL = "https://biit.cs.ut.ee/gprofiler/api/gost/profile/"
 GO_SOURCES = ["GO:BP", "GO:MF", "GO:CC"]
@@ -68,15 +57,15 @@ def intersection_genes(result, query_genes):
     return ",".join(gene for gene, hit in zip(query_genes, evidence) if hit)
 
 
-def add_go_to_browser(labels):
-    text = MODULE_BROWSER.read_text()
+def add_go_to_browser(labels, module_browser, output_html):
+    text = module_browser.read_text()
     match = re.search(
         r'<script id="heatmap-data" type="application/json">(.*?)</script>',
         text,
         re.S,
     )
     if not match:
-        raise ValueError(f"Embedded browser data not found in {MODULE_BROWSER}")
+        raise ValueError(f"Embedded browser data not found in {module_browser}")
     data = json.loads(match.group(1))
     for module in data["modules"]:
         go = labels.get(str(module["module_id"]), {})
@@ -91,12 +80,23 @@ def add_go_to_browser(labels):
     output = re.sub(r"<h1>.*?</h1>", "<h1>Low-Resolution GO Module Browser</h1>", output, count=1)
     output = output.replace("<th>auto theme</th>", "<th>top GO term</th>")
     output = output.replace("Theme: ${esc(m.auto_theme)}", "top GO term: ${esc(m.auto_theme)}")
-    FINAL_BROWSER.write_text(output)
+    output_html.write_text(output)
 
 
 def main():
-    summaries = read_tsv(MODULE_SUMMARY)
-    members = read_tsv(MODULE_MEMBERS)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--module-summary", type=pathlib.Path, required=True)
+    parser.add_argument("--module-members", type=pathlib.Path, required=True)
+    parser.add_argument("--module-browser", type=pathlib.Path, required=True)
+    parser.add_argument("--summary-output", type=pathlib.Path, required=True)
+    parser.add_argument("--enrichment-output", type=pathlib.Path, required=True)
+    parser.add_argument("--browser-output", type=pathlib.Path, required=True)
+    args = parser.parse_args()
+    for output in (args.summary_output, args.enrichment_output, args.browser_output):
+        output.parent.mkdir(parents=True, exist_ok=True)
+
+    summaries = read_tsv(args.module_summary)
+    members = read_tsv(args.module_members)
     genes_by_module = {}
     for row in members:
         if row["gene"]:
@@ -150,13 +150,13 @@ def main():
         "significant", "query_size", "term_size", "intersection_size",
         "precision", "recall", "intersection_genes", "description",
     ]
-    write_tsv(FINAL_SUMMARY, go_summaries, go_columns)
-    write_tsv(FINAL_ENRICHMENT, enrichment_rows, enrichment_columns)
-    add_go_to_browser(labels)
+    write_tsv(args.summary_output, go_summaries, go_columns)
+    write_tsv(args.enrichment_output, enrichment_rows, enrichment_columns)
+    add_go_to_browser(labels, args.module_browser, args.browser_output)
     print(f"GO enrichment completed for {len(summaries)} modules")
-    print(FINAL_SUMMARY)
-    print(FINAL_ENRICHMENT)
-    print(FINAL_BROWSER)
+    print(args.summary_output.resolve())
+    print(args.enrichment_output.resolve())
+    print(args.browser_output.resolve())
 
 
 if __name__ == "__main__":
