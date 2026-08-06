@@ -24,14 +24,14 @@ def write_tsv(path, rows, columns):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--clustered-html", type=pathlib.Path, required=True)
-    parser.add_argument("--summary-output", type=pathlib.Path, required=True)
-    parser.add_argument("--members-output", type=pathlib.Path, required=True)
-    parser.add_argument("--browser-output", type=pathlib.Path, required=True)
+    parser.add_argument("--input", type=pathlib.Path, required=True)
+    parser.add_argument("--output-summary", type=pathlib.Path, required=True)
+    parser.add_argument("--output-members", type=pathlib.Path, required=True)
+    parser.add_argument("--output-html", type=pathlib.Path, required=True)
     args = parser.parse_args()
-    for output in (args.summary_output, args.members_output, args.browser_output):
+    for output in (args.output_summary, args.output_members, args.output_html):
         output.parent.mkdir(parents=True, exist_ok=True)
-    labels, matrix = unbiased.load_plotly_heatmap(args.clustered_html)
+    labels, matrix = unbiased.load_plotly_heatmap(args.input)
     segments, prefix = unbiased.recursive_segments(
         matrix,
         min_size=6,
@@ -62,19 +62,19 @@ def main():
         "top_cells",
     ]
     member_cols = ["module_id", "position", "label", "cell_type", "gene"]
-    write_tsv(args.summary_output, summaries, summary_cols)
-    write_tsv(args.members_output, member_rows, member_cols)
+    write_tsv(args.output_summary, summaries, summary_cols)
+    write_tsv(args.output_members, member_rows, member_cols)
     module_browser.write_browser(
-        args.clustered_html,
-        args.summary_output,
-        args.members_output,
-        args.browser_output,
+        args.input,
+        args.output_summary,
+        args.output_members,
+        args.output_html,
     )
 
     print(f"Generated {len(summaries)} unsupervised low-resolution modules")
-    print(args.summary_output.resolve())
-    print(args.members_output.resolve())
-    print(args.browser_output.resolve())
+    print(args.output_summary.resolve())
+    print(args.output_members.resolve())
+    print(args.output_html.resolve())
     for row in summaries:
         print(
             f"module {row['module_id']:>2} {row['start']:>4}:{row['end']:<4} "

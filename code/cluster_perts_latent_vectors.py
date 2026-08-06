@@ -127,34 +127,34 @@ def write_clustered_html(effect, output_html, significance):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--embeddings", type=pathlib.Path, required=True)
-    parser.add_argument("--edist-output", type=pathlib.Path, required=True)
-    parser.add_argument("--effect-vectors-output", type=pathlib.Path, required=True)
-    parser.add_argument("--clustered-html-output", type=pathlib.Path, required=True)
+    parser.add_argument("--input", type=pathlib.Path, required=True)
+    parser.add_argument("--output-edist", type=pathlib.Path, required=True)
+    parser.add_argument("--output-effect-vectors", type=pathlib.Path, required=True)
+    parser.add_argument("--output-html", type=pathlib.Path, required=True)
     parser.add_argument("--min-cells", type=int, default=20)
     parser.add_argument("--permutations", type=int, default=1000)
     parser.add_argument("--fdr", type=float, default=0.05)
     args = parser.parse_args()
     for output in (
-        args.edist_output,
-        args.effect_vectors_output,
-        args.clustered_html_output,
+        args.output_edist,
+        args.output_effect_vectors,
+        args.output_html,
     ):
         output.parent.mkdir(parents=True, exist_ok=True)
 
-    embeddings = anndata.read_h5ad(args.embeddings)
+    embeddings = anndata.read_h5ad(args.input)
     required = {"predicted_group", "gene_target"}
     missing = required - set(embeddings.obs.columns)
     if missing:
         raise ValueError(f"embeddings.h5ad is missing .obs columns: {sorted(missing)}")
     edist = compute_edists(embeddings, args.min_cells, args.permutations)
-    edist.to_csv(args.edist_output, index=False)
+    edist.to_csv(args.output_edist, index=False)
     effect = build_effect_vectors(embeddings, edist, args.min_cells)
-    effect.write_h5ad(args.effect_vectors_output)
-    write_clustered_html(effect, args.clustered_html_output, args.fdr)
-    print(args.edist_output.resolve())
-    print(args.effect_vectors_output.resolve())
-    print(args.clustered_html_output.resolve())
+    effect.write_h5ad(args.output_effect_vectors)
+    write_clustered_html(effect, args.output_html, args.fdr)
+    print(args.output_edist.resolve())
+    print(args.output_effect_vectors.resolve())
+    print(args.output_html.resolve())
 
 
 if __name__ == "__main__":

@@ -14,11 +14,6 @@ GPROFILER_URL = "https://biit.cs.ut.ee/gprofiler/api/gost/profile/"
 GO_SOURCES = ["GO:BP", "GO:MF", "GO:CC"]
 
 
-def read_tsv(path):
-    with path.open(newline="") as handle:
-        return list(csv.DictReader(handle, delimiter="\t"))
-
-
 def write_tsv(path, rows, columns):
     with path.open("w", newline="") as handle:
         writer = csv.DictWriter(handle, fieldnames=columns, delimiter="\t", extrasaction="ignore")
@@ -57,16 +52,19 @@ def intersection_genes(result, query_genes):
     return ",".join(gene for gene, hit in zip(query_genes, evidence) if hit)
 
 
-def add_go_to_browser(labels, module_browser, output_html):
-    text = module_browser.read_text()
+def load_browser(path):
+    text = path.read_text()
     match = re.search(
         r'<script id="heatmap-data" type="application/json">(.*?)</script>',
         text,
         re.S,
     )
     if not match:
-        raise ValueError(f"Embedded browser data not found in {module_browser}")
-    data = json.loads(match.group(1))
+        raise ValueError(f"Embedded browser data not found in {path}")
+    return text, match, json.loads(match.group(1))
+
+
+def add_go_to_browser(text, match, data, labels, output_html):
     for module in data["modules"]:
         go = labels.get(str(module["module_id"]), {})
         module["auto_theme"] = go.get("go_auto_theme", "")
@@ -85,18 +83,23 @@ def add_go_to_browser(labels, module_browser, output_html):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--module-summary", type=pathlib.Path, required=True)
-    parser.add_argument("--module-members", type=pathlib.Path, required=True)
-    parser.add_argument("--module-browser", type=pathlib.Path, required=True)
-    parser.add_argument("--summary-output", type=pathlib.Path, required=True)
-    parser.add_argument("--enrichment-output", type=pathlib.Path, required=True)
-    parser.add_argument("--browser-output", type=pathlib.Path, required=True)
+    parser.add_argument("--input", type=pathlib.Path, required=True)
+    parser.add_argument("--output-summary", type=pathlib.Path, required=True)
+    parser.add_argument("--output-enrichment", type=pathlib.Path, required=True)
+    parser.add_argument("--output-html", type=pathlib.Path, required=True)
     args = parser.parse_args()
-    for output in (args.summary_output, args.enrichment_output, args.browser_output):
+    for output in (args.output_summary, args.output_enrichment, args.output_html):
         output.parent.mkdir(parents=True, exist_ok=True)
 
-    summaries = read_tsv(args.module_summary)
-    members = read_tsv(args.module_members)
+    browser_text, browser_match, browser_data = load_browser(args.input)
+    summaries = []
+    members = []
+    for module in browser_data["modules"]:
+        summary = {key: value for key, value in module.items() if key != "members"}
+        summary["module_id"] = str(summary["module_id"])
+        summaries.append(summary)
+        for member in module.get("members", []):
+            members.append(dict(member, module_id=summary["module_id"]))
     genes_by_module = {}
     for row in members:
         if row["gene"]:
@@ -150,13 +153,15 @@ def main():
         "significant", "query_size", "term_size", "intersection_size",
         "precision", "recall", "intersection_genes", "description",
     ]
-    write_tsv(args.summary_output, go_summaries, go_columns)
-    write_tsv(args.enrichment_output, enrichment_rows, enrichment_columns)
-    add_go_to_browser(labels, args.module_browser, args.browser_output)
+    write_tsv(args.output_summary, go_summaries, go_columns)
+    write_tsv(args.output_enrichment, enrichment_rows, enrichment_columns)
+    add_go_to_browser(
+        browser_text, browser_match, browser_data, labels, args.output_html
+    )
     print(f"GO enrichment completed for {len(summaries)} modules")
-    print(args.summary_output.resolve())
-    print(args.enrichment_output.resolve())
-    print(args.browser_output.resolve())
+    print(args.output_summary.resolve())
+    print(args.output_enrichment.resolve())
+    print(args.output_html.resolve())
 
 
 if __name__ == "__main__":

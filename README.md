@@ -27,24 +27,22 @@ python code/generate_embeddings.py \
   --output pipeline_work/embeddings.h5ad
 
 python code/cluster_perts_latent_vectors.py \
-  --embeddings pipeline_work/embeddings.h5ad \
-  --edist-output pipeline_work/edist_results.csv.gz \
-  --effect-vectors-output pipeline_work/pb_effect_vectors.h5ad \
-  --clustered-html-output pipeline_work/clustered_pert_effect_vectors.html
+  --input pipeline_work/embeddings.h5ad \
+  --output-edist pipeline_work/edist_results.csv.gz \
+  --output-effect-vectors pipeline_work/pb_effect_vectors.h5ad \
+  --output-html pipeline_work/clustered_pert_effect_vectors.html
 
 python code/generate_low_resolution_browser.py \
-  --clustered-html pipeline_work/clustered_pert_effect_vectors.html \
-  --summary-output analysis_outputs/tables/low_resolution_module_summary.tsv \
-  --members-output analysis_outputs/tables/low_resolution_module_members.tsv \
-  --browser-output analysis_outputs/html/low_resolution_module_browser.html
+  --input pipeline_work/clustered_pert_effect_vectors.html \
+  --output-summary analysis_outputs/tables/low_resolution_module_summary.tsv \
+  --output-members analysis_outputs/tables/low_resolution_module_members.tsv \
+  --output-html analysis_outputs/html/low_resolution_module_browser.html
 
 python code/run_go_enrichment.py \
-  --module-summary analysis_outputs/tables/low_resolution_module_summary.tsv \
-  --module-members analysis_outputs/tables/low_resolution_module_members.tsv \
-  --module-browser analysis_outputs/html/low_resolution_module_browser.html \
-  --summary-output analysis_outputs/tables/final_low_resolution_module_summary.tsv \
-  --enrichment-output analysis_outputs/tables/final_low_resolution_go_enrichment.tsv \
-  --browser-output analysis_outputs/html/final_low_resolution_module_browser.html
+  --input analysis_outputs/html/low_resolution_module_browser.html \
+  --output-summary analysis_outputs/tables/final_low_resolution_module_summary.tsv \
+  --output-enrichment analysis_outputs/tables/final_low_resolution_go_enrichment.tsv \
+  --output-html analysis_outputs/html/final_low_resolution_module_browser.html
 ```
 
 After each command, inspect the outputs listed below. The next command reads
@@ -85,7 +83,8 @@ the preceding command's output.
 
 ### 4. `run_go_enrichment.py`
 
-- **Input:** low-resolution module summary and membership tables
+- **Input:** low-resolution module-browser HTML, which contains the module
+  summary and membership data
 - **Function:** queries mouse g:Profiler for `GO:BP`, `GO:MF`, and `GO:CC`,
   using all heatmap perturbation genes as the custom background; adds each
   module's top GO term to the browser
