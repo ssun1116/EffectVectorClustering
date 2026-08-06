@@ -15,36 +15,34 @@ columns:
 
 ## Run the pipeline step by step
 
-Run every numbered script separately. This keeps every intermediate output
-available for inspection before continuing to the next step.
-
 ```bash
 cd /data/EffectVectorClustering
 python -m pip install -r requirements.txt
 
+# Step 1: Train SCVI models and generate per-cell latent embeddings.
 python code/generate_embeddings.py \
   --input /path/to/input.h5ad \
   --output pipeline_work/embeddings.h5ad
 
+# Step 2: Calculate perturbation effect vectors and create the clustered heatmap.
 python code/cluster_perts_latent_vectors.py \
   --input pipeline_work/embeddings.h5ad \
   --output-edist pipeline_work/edist_results.csv.gz \
   --output-effect-vectors pipeline_work/pb_effect_vectors.h5ad \
   --output-html pipeline_work/clustered_pert_effect_vectors.html
 
+# Step 3: Define low-resolution modules and create the module browser.
 python code/generate_low_resolution_browser.py \
   --input pipeline_work/clustered_pert_effect_vectors.html \
   --output-tables analysis_outputs/tables/low_resolution_modules.xlsx \
   --output-html analysis_outputs/html/low_resolution_module_browser.html
 
+# Step 3: Define low-resolution modules and create the module browser.
 python code/run_go_enrichment.py \
   --input analysis_outputs/html/low_resolution_module_browser.html \
   --output-tables analysis_outputs/tables/final_low_resolution_modules.xlsx \
   --output-html analysis_outputs/html/final_low_resolution_module_browser.html
 ```
-
-After each command, inspect the outputs listed below. The next command reads
-the preceding command's output.
 
 ## Code order
 
@@ -93,8 +91,7 @@ the preceding command's output.
 
 ## Helper files
 
-The following internal modules reside under `code/helpers/` and are not run
-directly.
+The following internal modules reside under `code/helpers/`.
 
 ### `helpers/aggregation.py`
 
@@ -115,25 +112,7 @@ directly.
 - **Function:** builds the self-contained interactive HTML interface
 - **Output:** low-resolution module-browser HTML used as the final browser
 
-## Pipeline summary
+## Etc.
 
-```text
-input.h5ad (raw counts)
-→ SCVI
-→ Leiden cluster
-→ LinearSCVI
-→ embeddings.h5ad
-→ energy-distance tests
-→ edist_results.csv.gz
-→ group–target mean vectors minus matched Non_target mean
-→ pb_effect_vectors.h5ad
-→ FDR < 0.05 pair selection
-→ cosine similarity and hierarchical clustering
-→ clustered_pert_effect_vectors.html
-→ low-resolution module segmentation
-→ g:Profiler GO enrichment
-→ final_low_resolution_module_browser.html
-```
-
-Energy-distance testing uses 1,000 permutations and may take time on a large
-dataset. GO enrichment requires internet access to the g:Profiler API.
+- Energy-distance testing uses 1,000 permutations and may take time on a large dataset.
+- GO enrichment requires internet access to the g:Profiler API.
