@@ -1,0 +1,7 @@
+__pycache__/
+*.py[cod]
+*.h5ad
+pipeline_work/
+analysis_outputs/html/
+analysis_outputs/tables/
+clustered_pert_effect_vectors*.html

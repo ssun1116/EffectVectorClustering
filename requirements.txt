@@ -1,0 +1,11 @@
+anndata
+numpy
+numba
+pandas
+plotly
+scanpy[leiden]
+scikit-learn
+scipy
+scvi-tools
+statsmodels
+tqdm
