@@ -19,29 +19,22 @@ columns:
 cd /data/EffectVectorClustering
 python -m pip install -r requirements.txt
 
-# Step 1: Train SCVI models and generate per-cell latent embeddings.
+# 1. Generate embeddings
 python code/generate_embeddings.py \
   --input /path/to/input.h5ad \
   --output pipeline_work/embeddings.h5ad
 
-# Step 2: Calculate perturbation effect vectors and create the clustered heatmap.
+# 2. Cluster effect vectors
 python code/cluster_perts_latent_vectors.py \
-  --input pipeline_work/embeddings.h5ad \
-  --output-edist pipeline_work/edist_results.csv.gz \
-  --output-effect-vectors pipeline_work/pb_effect_vectors.h5ad \
-  --output-html pipeline_work/clustered_pert_effect_vectors.html
+  --input pipeline_work/embeddings.h5ad
 
-# Step 3: Define low-resolution modules and create the module browser.
+# 3. Build low-resolution modules
 python code/generate_low_resolution_browser.py \
-  --input pipeline_work/clustered_pert_effect_vectors.html \
-  --output-tables analysis_outputs/tables/low_resolution_modules.xlsx \
-  --output-html analysis_outputs/html/low_resolution_module_browser.html
+  --input pipeline_work/clustered_pert_effect_vectors.html
 
-# Step 3: Define low-resolution modules and create the module browser.
+# 4. Add GO enrichment
 python code/run_go_enrichment.py \
-  --input analysis_outputs/html/low_resolution_module_browser.html \
-  --output-tables analysis_outputs/tables/final_low_resolution_modules.xlsx \
-  --output-html analysis_outputs/html/final_low_resolution_module_browser.html
+  --input analysis_outputs/html/low_resolution_module_browser.html
 ```
 
 ## Code order
