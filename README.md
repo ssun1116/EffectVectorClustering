@@ -78,10 +78,8 @@ the preceding command's output.
   using all heatmap perturbation genes as the custom background; adds each
   module's top GO term to the browser
 - **Outputs:**
-  - `analysis_outputs/tables/low_resolution_module_go_summary.tsv`
-  - `analysis_outputs/tables/low_resolution_module_go_enrichment.tsv`
-  - `analysis_outputs/html/low_resolution_go_module_browser.html`
   - `analysis_outputs/tables/final_low_resolution_module_summary.tsv`
+  - `analysis_outputs/tables/final_low_resolution_go_enrichment.tsv`
   - `analysis_outputs/html/final_low_resolution_module_browser.html`
 
 ## Helper files

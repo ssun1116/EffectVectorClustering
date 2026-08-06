@@ -4,7 +4,6 @@ import csv
 import json
 import pathlib
 import re
-import shutil
 import time
 
 import requests
@@ -18,11 +17,9 @@ HTML = OUTPUTS / "html"
 MODULE_SUMMARY = TABLES / "low_resolution_module_summary.tsv"
 MODULE_MEMBERS = TABLES / "low_resolution_module_members.tsv"
 MODULE_BROWSER = HTML / "low_resolution_module_browser.html"
-GO_SUMMARY = TABLES / "low_resolution_module_go_summary.tsv"
-GO_ENRICHMENT = TABLES / "low_resolution_module_go_enrichment.tsv"
-GO_BROWSER = HTML / "low_resolution_go_module_browser.html"
 FINAL_BROWSER = HTML / "final_low_resolution_module_browser.html"
 FINAL_SUMMARY = TABLES / "final_low_resolution_module_summary.tsv"
+FINAL_ENRICHMENT = TABLES / "final_low_resolution_go_enrichment.tsv"
 
 GPROFILER_URL = "https://biit.cs.ut.ee/gprofiler/api/gost/profile/"
 GO_SOURCES = ["GO:BP", "GO:MF", "GO:CC"]
@@ -94,7 +91,7 @@ def add_go_to_browser(labels):
     output = re.sub(r"<h1>.*?</h1>", "<h1>Low-Resolution GO Module Browser</h1>", output, count=1)
     output = output.replace("<th>auto theme</th>", "<th>top GO term</th>")
     output = output.replace("Theme: ${esc(m.auto_theme)}", "top GO term: ${esc(m.auto_theme)}")
-    GO_BROWSER.write_text(output)
+    FINAL_BROWSER.write_text(output)
 
 
 def main():
@@ -153,15 +150,12 @@ def main():
         "significant", "query_size", "term_size", "intersection_size",
         "precision", "recall", "intersection_genes", "description",
     ]
-    write_tsv(GO_SUMMARY, go_summaries, go_columns)
-    write_tsv(GO_ENRICHMENT, enrichment_rows, enrichment_columns)
+    write_tsv(FINAL_SUMMARY, go_summaries, go_columns)
+    write_tsv(FINAL_ENRICHMENT, enrichment_rows, enrichment_columns)
     add_go_to_browser(labels)
-    shutil.copyfile(GO_BROWSER, FINAL_BROWSER)
-    shutil.copyfile(GO_SUMMARY, FINAL_SUMMARY)
     print(f"GO enrichment completed for {len(summaries)} modules")
-    print(GO_SUMMARY)
-    print(GO_ENRICHMENT)
-    print(GO_BROWSER)
+    print(FINAL_SUMMARY)
+    print(FINAL_ENRICHMENT)
     print(FINAL_BROWSER)
 
 
