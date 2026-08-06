@@ -16,6 +16,10 @@ from statsmodels.stats.multitest import multipletests
 from helpers.aggregation import aggregate_anndata
 
 
+ROOT = pathlib.Path(__file__).resolve().parents[1]
+WORK = ROOT / "pipeline_work"
+
+
 @njit(parallel=True)
 def mean_pairwise_distance(x, y):
     total = 0.0
@@ -128,9 +132,9 @@ def write_clustered_html(effect, output_html, significance):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--input", type=pathlib.Path, required=True)
-    parser.add_argument("--output-edist", type=pathlib.Path, required=True)
-    parser.add_argument("--output-effect-vectors", type=pathlib.Path, required=True)
-    parser.add_argument("--output-html", type=pathlib.Path, required=True)
+    parser.add_argument("--output-edist", type=pathlib.Path, default=WORK / "edist_results.csv.gz")
+    parser.add_argument("--output-effect-vectors", type=pathlib.Path, default=WORK / "pb_effect_vectors.h5ad")
+    parser.add_argument("--output-html", type=pathlib.Path, default=WORK / "clustered_pert_effect_vectors.html")
     parser.add_argument("--min-cells", type=int, default=20)
     parser.add_argument("--permutations", type=int, default=1000)
     parser.add_argument("--fdr", type=float, default=0.05)

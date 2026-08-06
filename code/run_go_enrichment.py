@@ -12,6 +12,8 @@ import requests
 
 GPROFILER_URL = "https://biit.cs.ut.ee/gprofiler/api/gost/profile/"
 GO_SOURCES = ["GO:BP", "GO:MF", "GO:CC"]
+ROOT = pathlib.Path(__file__).resolve().parents[1]
+OUTPUTS = ROOT / "analysis_outputs"
 
 
 def run_gprofiler(query_genes, background_genes, retries=3):
@@ -77,8 +79,16 @@ def add_go_to_browser(text, match, data, labels, output_html):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--input", type=pathlib.Path, required=True)
-    parser.add_argument("--output-tables", type=pathlib.Path, required=True)
-    parser.add_argument("--output-html", type=pathlib.Path, required=True)
+    parser.add_argument(
+        "--output-tables",
+        type=pathlib.Path,
+        default=OUTPUTS / "tables" / "final_low_resolution_modules.xlsx",
+    )
+    parser.add_argument(
+        "--output-html",
+        type=pathlib.Path,
+        default=OUTPUTS / "html" / "final_low_resolution_module_browser.html",
+    )
     args = parser.parse_args()
     for output in (args.output_tables, args.output_html):
         output.parent.mkdir(parents=True, exist_ok=True)

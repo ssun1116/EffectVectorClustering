@@ -7,11 +7,23 @@ from helpers import clustering_helpers as unbiased
 from helpers import module_browser
 
 
+ROOT = pathlib.Path(__file__).resolve().parents[1]
+OUTPUTS = ROOT / "analysis_outputs"
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--input", type=pathlib.Path, required=True)
-    parser.add_argument("--output-tables", type=pathlib.Path, required=True)
-    parser.add_argument("--output-html", type=pathlib.Path, required=True)
+    parser.add_argument(
+        "--output-tables",
+        type=pathlib.Path,
+        default=OUTPUTS / "tables" / "low_resolution_modules.xlsx",
+    )
+    parser.add_argument(
+        "--output-html",
+        type=pathlib.Path,
+        default=OUTPUTS / "html" / "low_resolution_module_browser.html",
+    )
     args = parser.parse_args()
     args.output_tables.parent.mkdir(parents=True, exist_ok=True)
     args.output_html.parent.mkdir(parents=True, exist_ok=True)
