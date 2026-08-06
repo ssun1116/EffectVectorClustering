@@ -1,6 +1,7 @@
 anndata
 numpy
 numba
+openpyxl
 pandas
 plotly
 requests

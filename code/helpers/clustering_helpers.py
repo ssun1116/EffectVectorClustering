@@ -163,21 +163,3 @@ def summarize_segments(labels, matrix, segments, prefix):
                 }
             )
     return summaries, member_rows
-
-
-def write_tsv(path, rows, columns):
-    with path.open("w") as fh:
-        fh.write("\t".join(columns) + "\n")
-        for row in rows:
-            vals = []
-            for col in columns:
-                val = row.get(col, "")
-                if isinstance(val, float):
-                    vals.append("" if math.isnan(val) else f"{val:.6g}")
-                else:
-                    vals.append(str(val).replace("\t", " "))
-            fh.write("\t".join(vals) + "\n")
-
-
-def make_notebook():
-    nb = nbf.v4.new_notebook()

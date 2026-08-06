@@ -1,24 +1,17 @@
 """Run low-resolution module GO enrichment and annotate the module browser."""
 
 import argparse
-import csv
 import json
 import pathlib
 import re
 import time
 
+import pandas as pd
 import requests
 
 
 GPROFILER_URL = "https://biit.cs.ut.ee/gprofiler/api/gost/profile/"
 GO_SOURCES = ["GO:BP", "GO:MF", "GO:CC"]
-
-
-def write_tsv(path, rows, columns):
-    with path.open("w", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=columns, delimiter="\t", extrasaction="ignore")
-        writer.writeheader()
-        writer.writerows({column: row.get(column, "") for column in columns} for row in rows)
 
 
 def run_gprofiler(query_genes, background_genes, retries=3):
@@ -84,11 +77,10 @@ def add_go_to_browser(text, match, data, labels, output_html):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--input", type=pathlib.Path, required=True)
-    parser.add_argument("--output-summary", type=pathlib.Path, required=True)
-    parser.add_argument("--output-enrichment", type=pathlib.Path, required=True)
+    parser.add_argument("--output-tables", type=pathlib.Path, required=True)
     parser.add_argument("--output-html", type=pathlib.Path, required=True)
     args = parser.parse_args()
-    for output in (args.output_summary, args.output_enrichment, args.output_html):
+    for output in (args.output_tables, args.output_html):
         output.parent.mkdir(parents=True, exist_ok=True)
 
     browser_text, browser_match, browser_data = load_browser(args.input)
@@ -153,14 +145,18 @@ def main():
         "significant", "query_size", "term_size", "intersection_size",
         "precision", "recall", "intersection_genes", "description",
     ]
-    write_tsv(args.output_summary, go_summaries, go_columns)
-    write_tsv(args.output_enrichment, enrichment_rows, enrichment_columns)
+    with pd.ExcelWriter(args.output_tables) as writer:
+        pd.DataFrame(go_summaries, columns=go_columns).to_excel(
+            writer, sheet_name="summary", index=False
+        )
+        pd.DataFrame(enrichment_rows, columns=enrichment_columns).to_excel(
+            writer, sheet_name="go_enrichment", index=False
+        )
     add_go_to_browser(
         browser_text, browser_match, browser_data, labels, args.output_html
     )
     print(f"GO enrichment completed for {len(summaries)} modules")
-    print(args.output_summary.resolve())
-    print(args.output_enrichment.resolve())
+    print(args.output_tables.resolve())
     print(args.output_html.resolve())
 
 

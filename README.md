@@ -34,14 +34,12 @@ python code/cluster_perts_latent_vectors.py \
 
 python code/generate_low_resolution_browser.py \
   --input pipeline_work/clustered_pert_effect_vectors.html \
-  --output-summary analysis_outputs/tables/low_resolution_module_summary.tsv \
-  --output-members analysis_outputs/tables/low_resolution_module_members.tsv \
+  --output-tables analysis_outputs/tables/low_resolution_modules.xlsx \
   --output-html analysis_outputs/html/low_resolution_module_browser.html
 
 python code/run_go_enrichment.py \
   --input analysis_outputs/html/low_resolution_module_browser.html \
-  --output-summary analysis_outputs/tables/final_low_resolution_module_summary.tsv \
-  --output-enrichment analysis_outputs/tables/final_low_resolution_go_enrichment.tsv \
+  --output-tables analysis_outputs/tables/final_low_resolution_modules.xlsx \
   --output-html analysis_outputs/html/final_low_resolution_module_browser.html
 ```
 
@@ -75,22 +73,22 @@ the preceding command's output.
 - **Input:** clustered cosine-similarity matrix embedded in
   `clustered_pert_effect_vectors.html`
 - **Function:** divides the hierarchical order into contiguous low-resolution
-  modules and summarizes their genes and cell groups
+  modules and embeds their summary and member information in the browser
 - **Outputs:**
-  - `analysis_outputs/tables/low_resolution_module_summary.tsv`
-  - `analysis_outputs/tables/low_resolution_module_members.tsv`
+  - `analysis_outputs/tables/low_resolution_modules.xlsx`, with `summary` and
+    `members` sheets
   - `analysis_outputs/html/low_resolution_module_browser.html`
 
 ### 4. `run_go_enrichment.py`
 
-- **Input:** low-resolution module-browser HTML, which contains the module
-  summary and membership data
+- **Input:** low-resolution module-browser HTML, which contains the embedded
+  module summary and membership data from step 3
 - **Function:** queries mouse g:Profiler for `GO:BP`, `GO:MF`, and `GO:CC`,
   using all heatmap perturbation genes as the custom background; adds each
   module's top GO term to the browser
 - **Outputs:**
-  - `analysis_outputs/tables/final_low_resolution_module_summary.tsv`
-  - `analysis_outputs/tables/final_low_resolution_go_enrichment.tsv`
+  - `analysis_outputs/tables/final_low_resolution_modules.xlsx`, with `summary`
+    and `go_enrichment` sheets
   - `analysis_outputs/html/final_low_resolution_module_browser.html`
 
 ## Helper files

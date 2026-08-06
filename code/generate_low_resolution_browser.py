@@ -1,36 +1,20 @@
 import argparse
-import csv
-import math
 import pathlib
+
+import pandas as pd
 
 from helpers import clustering_helpers as unbiased
 from helpers import module_browser
 
 
-def write_tsv(path, rows, columns):
-    with path.open("w", newline="") as fh:
-        writer = csv.DictWriter(fh, fieldnames=columns, delimiter="\t", extrasaction="ignore")
-        writer.writeheader()
-        for row in rows:
-            clean = {}
-            for key in columns:
-                val = row.get(key, "")
-                if isinstance(val, float):
-                    clean[key] = "" if math.isnan(val) else f"{val:.6g}"
-                else:
-                    clean[key] = val
-            writer.writerow(clean)
-
-
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--input", type=pathlib.Path, required=True)
-    parser.add_argument("--output-summary", type=pathlib.Path, required=True)
-    parser.add_argument("--output-members", type=pathlib.Path, required=True)
+    parser.add_argument("--output-tables", type=pathlib.Path, required=True)
     parser.add_argument("--output-html", type=pathlib.Path, required=True)
     args = parser.parse_args()
-    for output in (args.output_summary, args.output_members, args.output_html):
-        output.parent.mkdir(parents=True, exist_ok=True)
+    args.output_tables.parent.mkdir(parents=True, exist_ok=True)
+    args.output_html.parent.mkdir(parents=True, exist_ok=True)
     labels, matrix = unbiased.load_plotly_heatmap(args.input)
     segments, prefix = unbiased.recursive_segments(
         matrix,
@@ -43,37 +27,18 @@ def main():
     for row in summaries:
         row["auto_theme"] = ""
         row["theme_hits"] = ""
-    summary_cols = [
-        "module_id",
-        "manual_label",
-        "auto_theme",
-        "theme_hits",
-        "start",
-        "end",
-        "size",
-        "within_mean",
-        "neighbor_mean",
-        "contrast",
-        "n_unique_genes",
-        "top_gene_fraction",
-        "gene_entropy",
-        "n_unique_cell_types",
-        "top_genes",
-        "top_cells",
-    ]
-    member_cols = ["module_id", "position", "label", "cell_type", "gene"]
-    write_tsv(args.output_summary, summaries, summary_cols)
-    write_tsv(args.output_members, member_rows, member_cols)
+    with pd.ExcelWriter(args.output_tables) as writer:
+        pd.DataFrame(summaries).to_excel(writer, sheet_name="summary", index=False)
+        pd.DataFrame(member_rows).to_excel(writer, sheet_name="members", index=False)
     module_browser.write_browser(
         args.input,
-        args.output_summary,
-        args.output_members,
+        summaries,
+        member_rows,
         args.output_html,
     )
 
     print(f"Generated {len(summaries)} unsupervised low-resolution modules")
-    print(args.output_summary.resolve())
-    print(args.output_members.resolve())
+    print(args.output_tables.resolve())
     print(args.output_html.resolve())
     for row in summaries:
         print(

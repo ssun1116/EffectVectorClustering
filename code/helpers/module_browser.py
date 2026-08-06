@@ -1,5 +1,4 @@
 import base64
-import csv
 import html
 import json
 import textwrap
@@ -32,29 +31,21 @@ def load_plotly_heatmap_payload(path):
     }
 
 
-def read_tsv(path):
-    with path.open(newline="") as fh:
-        return list(csv.DictReader(fh, delimiter="\t"))
-
-
 def as_float(row, key):
     val = row.get(key, "")
     return None if val == "" else float(val)
 
 
-def build_modules(summary_path, members_path):
-    annotated = {row["module_id"]: row for row in read_tsv(summary_path)}
-    unbiased = read_tsv(summary_path)
-    members = read_tsv(members_path)
+def build_modules(summaries, members):
     by_module = {}
     for row in members:
-        by_module.setdefault(row["module_id"], []).append(row)
+        by_module.setdefault(str(row["module_id"]), []).append(row)
 
     modules = []
-    for row in unbiased:
-        ann = annotated.get(row["module_id"], {})
+    for row in summaries:
+        module_key = str(row["module_id"])
         module_id = int(row["module_id"])
-        module_members = by_module.get(row["module_id"], [])
+        module_members = by_module.get(module_key, [])
         modules.append(
             {
                 "module_id": module_id,
@@ -70,8 +61,8 @@ def build_modules(summary_path, members_path):
                 "n_unique_cell_types": int(row["n_unique_cell_types"]),
                 "top_genes": row["top_genes"],
                 "top_cells": row["top_cells"],
-                "auto_theme": row.get("auto_theme", ann.get("theme", "")),
-                "theme_hits": row.get("theme_hits", ann.get("theme_hits", "")),
+                "auto_theme": row.get("auto_theme", ""),
+                "theme_hits": row.get("theme_hits", ""),
                 "members": [
                     {
                         "position": int(m["position"]),
@@ -86,9 +77,9 @@ def build_modules(summary_path, members_path):
     return modules
 
 
-def write_browser(clustered_html, summary_path, members_path, output_html):
+def write_browser(clustered_html, summaries, members, output_html):
     payload = load_plotly_heatmap_payload(clustered_html)
-    modules = build_modules(summary_path, members_path)
+    modules = build_modules(summaries, members)
     data = {
         "labels": payload["x"],
         "yLabels": payload["y"],
